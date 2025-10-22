@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spm_project/core/services/speech_to_text_service.dart';
 import 'dart:ui';
 import 'package:logger/logger.dart';
 import 'package:spm_project/di/injectable.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -15,13 +17,15 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
   late MySpeechToTextService _speechService;
   Logger logger = getit<Logger>();
+  User? user = FirebaseAuth.instance.currentUser;
+  final audioPlayer = AudioPlayer();
 
   @override
-void initState() {
-  super.initState();
-  _speechService = getit<MySpeechToTextService>();
-  _speechService.initSpeech(); 
-}
+  void initState() {
+    super.initState();
+    _speechService = getit<MySpeechToTextService>();
+    _speechService.initSpeech();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,22 +49,48 @@ void initState() {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          SizedBox(
-                            height: screenSize.height * 0.1,
+                          GestureDetector(
+                            onTap:(){context.go('/');},
+                            child: Container(
+                              height: screenSize.height * 0.1,
                             width: screenSize.width * 0.4,
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: const ButtonStyle(),
-                              child: const Text("First feature"),
+                              decoration: BoxDecoration(
+                                color: Colors.blueAccent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  "Feature 4",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                          SizedBox(
-                            height: screenSize.height * 0.1,
+                          GestureDetector(
+                            onTap:(){context.go('/quiz');},
+                            child: Container(
+                              height: screenSize.height * 0.1,
                             width: screenSize.width * 0.4,
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: const ButtonStyle(),
-                              child: const Text("First feature"),
+                              decoration: BoxDecoration(
+                                color: Colors.blueAccent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  "Quiz",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -69,24 +99,48 @@ void initState() {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          SizedBox(
-                            height: screenSize.height * 0.1,
+                          GestureDetector(
+                            onTap:(){context.go('/notes');},
+                            child: Container(
+                              height: screenSize.height * 0.1,
                             width: screenSize.width * 0.4,
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: const ButtonStyle(),
-                              child: const Text("First feature"),
+                              decoration: BoxDecoration(
+                                color: Colors.blueAccent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  "Notes",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                          SizedBox(
-                            height: screenSize.height * 0.1,
+                          GestureDetector(
+                            onTap:(){context.go('/options');},
+                            child: Container(
+                              height: screenSize.height * 0.1,
                             width: screenSize.width * 0.4,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                context.go('/options');
-                              },
-                              style: const ButtonStyle(),
-                              child: const Text("Interactive classroom"),
+                              decoration: BoxDecoration(
+                                color: Colors.blueAccent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  "Class-room",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -96,8 +150,17 @@ void initState() {
                 ),
                 GestureDetector(
                   onLongPress: () {
-                    showOverlay(context);
-                    startListeningAndNavigate();
+                    if (user != null) {
+                      logger.i(user!.email); 
+                      if (user!.email == 'admin@gmail.com') {
+                        context.go('/admin');
+                      } else {
+                        showOverlay(context);
+                        startListeningAndNavigate();
+                      }
+                    } else {
+                      logger.i('No user is logged in');
+                    }
                   },
                   child: Container(
                     height: screenSize.height * 0.41,
@@ -142,50 +205,28 @@ void initState() {
   }
 
   void showOverlay(BuildContext context) {
-    Size screenSize = MediaQuery.of(context).size;
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
+        final dialogContext = context;
+        Future.delayed(const Duration(seconds: 6), () {
+          if (dialogContext.mounted) {
+            Navigator.of(dialogContext).pop();
+          }
+        });
+
         return Stack(
           children: [
-            // Blurred background
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
               child: Container(
-                color: Colors.black.withOpacity(0.5), // Semi-transparent background
+                color: Colors.black
+                    .withOpacity(0.5), 
               ),
             ),
-            // Overlay content
             Center(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                width: screenSize.width * 0.8,
-                height: screenSize.height * 0.5,
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Overlay Content",
-                      style: TextStyle(
-                        fontSize: 24.0,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xd0ff0000),
-                        fontFamily: 'monospace',
-                        decoration: TextDecoration.underline,
-                        decorationColor: Color(0xffffff00),
-                        decorationStyle: TextDecorationStyle.double,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Text("This layout appears on long press"),
-                  ],
-                ),
-              ),
+              child: Image.asset('assets/images/mic-logo-vec.png'),
             ),
           ],
         );
@@ -194,11 +235,20 @@ void initState() {
   }
 
   void startListeningAndNavigate() async {
-    await _speechService.startListening((String result) {
-      logger.i(result);
-      if (result.toLowerCase().contains('classroom')) {
-        context.go('/options');
-      }
-    });
-  }
+  await _speechService.startListening((String result) async {
+    logger.i(result);
+    if (result.toLowerCase().contains('classroom')) {
+      context.go('/options');
+    }
+    if (result.toLowerCase().contains('game')) {
+      context.go('/quiz');
+    }
+    if (result.toLowerCase().contains('note')) {
+      context.go('/notes');
+    }
+    if (result.toLowerCase().contains('instruct')) {
+      await audioPlayer.play(AssetSource('sounds/instructions.mp3'));  
+    }
+  });
+}
 }
